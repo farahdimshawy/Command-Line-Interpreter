@@ -14,8 +14,10 @@ public class Main {
         }
     }
     public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        String directory = scanner.nextLine();
         pwd();
-        mkdir("file3");
+        mkdir(directory);
         pwd();
     }
 }
