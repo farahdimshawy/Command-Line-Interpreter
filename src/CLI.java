@@ -1,6 +1,7 @@
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -8,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CLI {
+    private static File workingDirectory = new File(System.getProperty("user.dir"));
     public CLI() {
     }
 
@@ -29,21 +31,62 @@ public class CLI {
     }};
 
     // print working directory
-    static String pwd() {
-        return (System.getProperty("user.dir"));
+    static String pwd(){
+        return workingDirectory.getAbsolutePath();
     }
 
+static File makeAbsolute(String srcPath) {
+    File file = new File(srcPath);
+    // Check if the path is already absolute
+    if (!file.isAbsolute()) {
+        // Convert to an absolute path using the current working directory
+        file = new File(workingDirectory, srcPath);
+    }
+    return file.getAbsoluteFile();
+}
+    // change directory
+static String cd(String directoryPath) {
+    String homeDirectory = System.getProperty("user.home");
+
+    if (directoryPath == null || directoryPath.trim().isEmpty()) {
+        directoryPath = homeDirectory;
+    } else if (directoryPath.equals("~")) {
+        directoryPath = homeDirectory;
+    }
+
+    File newDirectory;
+
+    if (directoryPath.equals("..")) {
+        newDirectory = workingDirectory.getParentFile();
+        if (newDirectory == null) {
+            return "Already at the root directory.";
+        }
+    } else {
+        newDirectory = makeAbsolute(directoryPath);
+    }
+
+    if (!newDirectory.exists() || !newDirectory.isDirectory()) {
+        return "This directory doesn't exist. Please try again.";
+    }
+
+    workingDirectory = newDirectory;
+    return pwd(); // Return the new working directory path
+}
+
+
     // create directory
-    static boolean mkdir(File directory) {
+    static boolean mkdir(String d) {
+        File directory = new File(workingDirectory+"/"+d);
         return directory.exists() || directory.mkdirs();
     }
 
     // remove directory
-    static boolean rmdir(File directoryToBeDeleted) {
+    static boolean rmdir(String d) {
+        File directoryToBeDeleted = new File(workingDirectory+"/"+d);
         File[] allContents = directoryToBeDeleted.listFiles();
         if (allContents != null) {
             for (File file : allContents) {
-                rmdir(file);
+                rmdir(file.toString());
             }
         }
         return directoryToBeDeleted.delete();
@@ -92,15 +135,15 @@ public class CLI {
         }
     }
 
-    private static File workingDirectory = new File(System.getProperty("user.dir"));
+   //private static File workingDirectory = new File(System.getProperty("user.dir"));
 
-    static File makeAbsolute(String srcPath) {
-        File f = new File(srcPath);
-        if (!f.isAbsolute()) {
-            f = new File(workingDirectory.getAbsolutePath(), srcPath);
-        }
-        return f.getAbsoluteFile();
-    }
+//    static File makeAbsolute(String srcPath) {
+//        File f = new File(srcPath);
+//        if (!f.isAbsolute()) {
+//            f = new File(workingDirectory.getAbsolutePath(), srcPath);
+//        }
+//        return f.getAbsoluteFile();
+//    }
 
     static class PrintManager {
         private final int NewLineLimit = 8;
@@ -246,9 +289,9 @@ public class CLI {
     }
     // |
     static Object piping(String command) throws IOException {
-        // Split commands by pipe character
+        // Split commands by pipe.txt character
         String[] commands = command.split("\\|");
-
+        CLI cli = new CLI();
         String output = null; // To hold the output of each command
 
         for (int i = 0; i < commands.length; i++) {
@@ -261,7 +304,7 @@ public class CLI {
 
             // Process each command
             if (arrayOfStrings[0].equals("pwd")) {
-                output = pwd(); // Get output from pwd
+                output = cli.pwd(); // Get output from pwd
                 System.out.println(output); // Print output
             }
             else if (arrayOfStrings[0].equals("ls")) {
