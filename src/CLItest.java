@@ -28,6 +28,7 @@ public class CLItest {
     private static final Path TARGET_FILE = TEMP_DIRECTORY.resolve("targetFile.txt");
     private static final Path REDIRECT_FILE = TEMP_DIRECTORY.resolve("redirectFile.txt");
     private static final Path PIPING_FILE = TEMP_DIRECTORY.resolve("pipingFile.txt");
+
     @BeforeEach
     public void setUp() throws IOException {
         // Ensure the directory structure is created before each test
@@ -63,21 +64,7 @@ public class CLItest {
         assertTrue(Files.exists(REDIRECT_FILE));
         assertTrue(Files.exists(PIPING_FILE));
     }
- //   @BeforeEach
-//    public void setUp() throws IOException {
-//        // Ensure the directory structure is created before each test
-//        Files.createDirectories(TEMP_DIRECTORY);
-//        Files.createFile(TEMP_DIRECTORY.resolve("file1.txt"));
-//        Files.createFile(TEMP_DIRECTORY.resolve("file2.txt"));
-//        Files.createFile(TEMP_DIRECTORY.resolve("sourceFile.txt"));
-//        Files.createFile(TEMP_DIRECTORY.resolve("MOVEFile.txt"));
-//        Files.createFile(TEMP_DIRECTORY.resolve(".hiddenfile"));
-//        Files.writeString(SOURCE_FILE, "Sample content for testing");
-//        if (!Files.exists(REDIRECT_FILE)) {
-//            Files.createFile(REDIRECT_FILE);
-//            Files.writeString(REDIRECT_FILE, "Initial content\n");
-//        }
-//    }
+
     @Test
     public void rmdirTest() throws IOException {
         Path pathToBeDeleted = TEMP_DIRECTORY.resolve(DIRECTORY_NAME);
@@ -89,6 +76,7 @@ public class CLItest {
                 "Directory still exists",
                 Files.exists(pathToBeDeleted));
     }
+
     @Test
     public void mkdirTest() throws IOException {
         Path newDirectory = TEMP_DIRECTORY.resolve("newDir");
@@ -98,6 +86,7 @@ public class CLItest {
         assertTrue("Failed to create the directory", result);
         assertTrue("This directory doesn't exist. Please try again", Files.exists(newDirectory));
     }
+
     @Test
     public void pwdTest() throws IOException {
         String currentDirectory = CLI.pwd();
@@ -109,6 +98,7 @@ public class CLItest {
         assertEquals("The current directory should match the expected path", expectedDirectory, currentDirectory);
 
     }
+
     @Test
     public void lsTest() {
         String output = CLI.ls(TEMP_DIRECTORY.toString());
@@ -145,8 +135,8 @@ public class CLItest {
         assert dir != null;
         Arrays.sort(dir);
         String[] lines = output.split("\n");
-        assertEquals("First file should be file2.txt in reverse order", dir[dir.length-1], lines[0]);
-        assertEquals("Second file should be file1.txt in reverse order", dir[dir.length-2], lines[1]);
+        assertEquals("First file should be file2.txt in reverse order", dir[dir.length - 1], lines[0]);
+        assertEquals("Second file should be file1.txt in reverse order", dir[dir.length - 2], lines[1]);
     }
 
     @Test
@@ -155,6 +145,7 @@ public class CLItest {
 
         assertEquals("This directory doesn't exist. Please try again.", output);
     }
+
     @Test
     public void testTouchCreateFile() throws IOException {
         // Test creating a new file
@@ -188,6 +179,7 @@ public class CLItest {
         //assertFalse("File should not be created because the parent This directory doesn't exist. Please try again", result);
         assertFalse("File should not exist", file.exists());
     }
+
     @Test
     public void testRedirectAppendToFile() throws IOException {
         String command = "echo 'Appending content' >> " + REDIRECT_FILE.toFile().getPath();
@@ -198,7 +190,7 @@ public class CLItest {
 
         // Verify that the content was appended
         String fileContent = Files.readString(REDIRECT_FILE);
-        assertTrue( "Content was not appended correctly", fileContent.contains("Appending content"));
+        assertTrue("Content was not appended correctly", fileContent.contains("Appending content"));
     }
 
     @Test
@@ -209,27 +201,25 @@ public class CLItest {
         // Verify that the content was overwritten
         String fileContent = Files.readString(REDIRECT_FILE);
 //        System.out.println("File content: '" + fileContent + "'");
-        assertEquals("Content was not overwritten correctly",  fileContent, "Hello, World!\n");
+        assertEquals("Content was not overwritten correctly", fileContent, "Hello, World!\n");
     }
 
 
+    @Test
+    public void mvTest() throws IOException {
+        // Ensure the target file does not exist for a clean move operation
+        if (Files.exists(TARGET_FILE)) {
+            Files.delete(TARGET_FILE);
+        }
 
+        // Move the source file to the target location
+        boolean result = CLI.mv(MOVE_FILE.toFile().getPath(), TARGET_FILE.toFile().getPath());
 
-
-@Test
-public void mvTest() throws IOException {
-    // Ensure the target file does not exist for a clean move operation
-    if (Files.exists(TARGET_FILE)) {
-        Files.delete(TARGET_FILE);
+        assertTrue("File move failed", result);
+        assertFalse("Source file should no longer exist", Files.exists(MOVE_FILE));
+        assertTrue("Target file does not exist", Files.exists(TARGET_FILE));
     }
 
-    // Move the source file to the target location
-    boolean result = CLI.mv(MOVE_FILE.toFile().getPath(), TARGET_FILE.toFile().getPath());
-
-    assertTrue("File move failed", result );
-    assertFalse( "Source file should no longer exist", Files.exists(MOVE_FILE));
-    assertTrue( "Target file does not exist", Files.exists(TARGET_FILE));
-}
     @Test
     public void mvrenameTest() throws IOException {
         // Ensure source file exists
@@ -249,27 +239,24 @@ public void mvTest() throws IOException {
         boolean result = CLI.mv(SOURCE_FILE.toFile().getPath(), renamedFile.toFile().getPath());
 
         // Verify that the rename operation was successful
-        assertTrue("File rename failed", result );
-        assertFalse( "Original file should no longer exist", Files.exists(SOURCE_FILE));
-        assertTrue( "Renamed file does not exist", Files.exists(renamedFile));
+        assertTrue("File rename failed", result);
+        assertFalse("Original file should no longer exist", Files.exists(SOURCE_FILE));
+        assertTrue("Renamed file does not exist", Files.exists(renamedFile));
     }
 
 
+    @Test
+    public void rmTest() throws IOException {
+        // Ensure the target file exists for the test
+        if (!Files.exists(TARGET_FILE)) {
+            Files.createFile(TARGET_FILE);
+        }
 
-   
-@Test
-public void rmTest() throws IOException {
-    // Ensure the target file exists for the test
-    if (!Files.exists(TARGET_FILE)) {
-        Files.createFile(TARGET_FILE);
+        boolean result = CLI.rm(TARGET_FILE.toFile().getPath());
+
+        assertTrue("File removal failed", result);
+        assertFalse("File should have been deleted", Files.exists(TARGET_FILE));
     }
-
-    boolean result = CLI.rm(TARGET_FILE.toFile().getPath());
-
-    assertTrue("File removal failed", result);
-    assertFalse( "File should have been deleted", Files.exists(TARGET_FILE));
-}
-
 
 
     @Test
@@ -277,8 +264,8 @@ public void rmTest() throws IOException {
         // Test the `cat` function with one parameter to read content
         String content = CLI.cat(SOURCE_FILE.toFile().getPath());
 
-        assertNotNull( "Content should not be null", content);
-        assertEquals(  "Content should match file content","Sample content for testing", content );
+        assertNotNull("Content should not be null", content);
+        assertEquals("Content should match file content", "Sample content for testing", content);
     }
 
     @Test
@@ -290,7 +277,7 @@ public void rmTest() throws IOException {
         boolean result = CLI.cat(SOURCE_FILE.toFile().getPath(), TARGET_FILE.toFile().getPath());
 
         // Verify the operation was successful
-        assertTrue( "Concatenation should succeed", result);
+        assertTrue("Concatenation should succeed", result);
 
         // Read the content of the target file to verify concatenation
         String targetContent = Files.readString(TARGET_FILE);
