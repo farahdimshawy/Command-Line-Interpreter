@@ -2,13 +2,18 @@ import jdk.internal.classfile.impl.TransformImpl;
 import org.junit.Test;
 import org.junit.jupiter.api.BeforeEach;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
+import static jdk.internal.org.jline.utils.InfoCmp.Capability.lines;
 import static org.junit.Assert.*;
 
 public class CLItest {
@@ -22,7 +27,7 @@ public class CLItest {
     private static final Path MOVE_FILE = TEMP_DIRECTORY.resolve("MOVEFile.txt");
     private static final Path TARGET_FILE = TEMP_DIRECTORY.resolve("targetFile.txt");
     private static final Path REDIRECT_FILE = TEMP_DIRECTORY.resolve("redirectFile.txt");
-
+    private static final Path PIPING_FILE = TEMP_DIRECTORY.resolve("pipingFile.txt");
     @BeforeEach
     public void setUp() throws IOException {
         // Ensure the directory structure is created before each test
@@ -35,6 +40,7 @@ public class CLItest {
         createFile(REDIRECT_FILE);
         createFile(FILE1);
         createFile(FILE2);
+        createFile(PIPING_FILE);
     }
 
     private void createFile(Path file) {
@@ -55,6 +61,7 @@ public class CLItest {
         assertTrue(Files.exists(MOVE_FILE));
         assertTrue(Files.exists(TARGET_FILE));
         assertTrue(Files.exists(REDIRECT_FILE));
+        assertTrue(Files.exists(PIPING_FILE));
     }
  //   @BeforeEach
 //    public void setUp() throws IOException {
@@ -290,5 +297,22 @@ public void rmTest() throws IOException {
         assertEquals("Existing content\nSample content for testing", targetContent, "Content should be appended to the target file");
     }
 
+    @Test
+    public void pipingTest() throws IOException {
+        List<String> lines = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(String.valueOf(PIPING_FILE)))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                lines.add(line); // Add each line to the list
+            }
+        }
+
+        // Convert the List to an array
+        String[] linesArray = lines.toArray(new String[0]);
+        // Sort the array
+        Arrays.sort(linesArray, String.CASE_INSENSITIVE_ORDER); // Sort alphabetically, case insensitive
+        String check = String.join("\n", linesArray);
+        assertEquals(check, CLI.piping("cat testFolder/pipingFile.txt | sort"));
+    }
 }
 
