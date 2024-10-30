@@ -15,6 +15,9 @@ public class CLItest {
     private static final Path DIRECTORY_NAME = Paths.get("new");
     private static final Path VALID_FILE = TEMP_DIRECTORY.resolve("validFile.txt");
     private static final Path INVALID_FILE = TEMP_DIRECTORY.resolve("invalidFile.txt");
+    private static final Path SOURCE_FILE = TEMP_DIRECTORY.resolve("sourceFile.txt");
+    private static final Path TARGET_FILE = TEMP_DIRECTORY.resolve("targetFile.txt");
+    private static final Path REDIRECT_FILE = TEMP_DIRECTORY.resolve("redirectFile.txt");
     @BeforeEach
     public void setUp() throws IOException {
         // Ensure the directory structure is created before each test
@@ -22,6 +25,11 @@ public class CLItest {
         Files.createFile(TEMP_DIRECTORY.resolve("file1.txt"));
         Files.createFile(TEMP_DIRECTORY.resolve("file2.txt"));
         Files.createFile(TEMP_DIRECTORY.resolve(".hiddenfile"));
+        Files.writeString(SOURCE_FILE, "Sample content for testing");
+        if (!Files.exists(REDIRECT_FILE)) {
+            Files.createFile(REDIRECT_FILE);
+            Files.writeString(REDIRECT_FILE, "Initial content\n");
+        }
     }
     @Test
     public void rmdirTest() throws IOException {
@@ -123,6 +131,114 @@ public class CLItest {
 
         assertFalse("File should not be created because the parent directory does not exist", result);
         assertFalse("File should not exist", file.exists());
+    }
+    @Test
+    public void testRedirectAppendToFile() throws IOException {
+        String command = "echo 'Appending content' >> " + REDIRECT_FILE.toFile().getPath();
+        CLI.redirectAppendToFile(command);
+
+        // Simulate print manager output
+        CLI.printManager.println("Appending content");
+
+        // Verify that the content was appended
+        String fileContent = Files.readString(REDIRECT_FILE);
+        assertTrue(fileContent.contains("Appending content"), "Content was not appended correctly");
+    }
+
+    @Test
+    public void testRedirectOverwriteToFile() throws IOException {
+        String command = "Hello, World!\n";
+        CLI.redirectOverwriteToFile(command + " > " + REDIRECT_FILE.toFile().getPath());
+
+        // Verify that the content was overwritten
+        String fileContent = Files.readString(REDIRECT_FILE);
+//        System.out.println("File content: '" + fileContent + "'");
+        assertEquals("Hello, World!\n", fileContent, "Content was not overwritten correctly");
+    }
+
+
+
+
+
+@Test
+public void mvTest() throws IOException {
+    // Ensure the target file does not exist for a clean move operation
+    if (Files.exists(TARGET_FILE)) {
+        Files.delete(TARGET_FILE);
+    }
+
+    // Move the source file to the target location
+    boolean result = CLI.mv(SOURCE_FILE.toFile().getPath(), TARGET_FILE.toFile().getPath());
+
+    assertTrue(result, "File move failed");
+    assertFalse(Files.exists(SOURCE_FILE), "Source file should no longer exist");
+    assertTrue(Files.exists(TARGET_FILE), "Target file does not exist");
+}
+    @Test
+    public void mvrenameTest() throws IOException {
+        // Ensure source file exists
+        if (!Files.exists(SOURCE_FILE)) {
+            Files.createFile(SOURCE_FILE);
+        }
+
+        // Define a new path in the same directory but with a different filename
+        Path renamedFile = TEMP_DIRECTORY.resolve("renamedFile.txt");
+
+        // Ensure the renamed file does not already exist
+        if (Files.exists(renamedFile)) {
+            Files.delete(renamedFile);
+        }
+
+        // Attempt to rename the source file
+        boolean result = CLI.mv(SOURCE_FILE.toFile().getPath(), renamedFile.toFile().getPath());
+
+        // Verify that the rename operation was successful
+        assertTrue(result, "File rename failed");
+        assertFalse(Files.exists(SOURCE_FILE), "Original file should no longer exist");
+        assertTrue(Files.exists(renamedFile), "Renamed file does not exist");
+    }
+
+
+
+   
+@Test
+public void rmTest() throws IOException {
+    // Ensure the target file exists for the test
+    if (!Files.exists(TARGET_FILE)) {
+        Files.createFile(TARGET_FILE);
+    }
+
+    boolean result = CLI.rm(TARGET_FILE.toFile().getPath());
+
+    assertTrue(result, "File removal failed");
+    assertFalse(Files.exists(TARGET_FILE), "File should have been deleted");
+}
+
+
+
+    @Test
+    public void catSingleParameterTest() throws IOException {
+        // Test the `cat` function with one parameter to read content
+        String content = CLI.cat(SOURCE_FILE.toFile().getPath());
+
+        assertNotNull(content, "Content should not be null");
+        assertEquals("Sample content for testing", content, "Content should match file content");
+    }
+
+    @Test
+    public void catTwoParametersTest() throws IOException {
+        // Create a target file where the content will be appended
+        Files.writeString(TARGET_FILE, "Existing content\n");
+
+        // Use the `cat` function with two parameters to concatenate content from SOURCE_FILE to TARGET_FILE
+        boolean result = CLI.cat(SOURCE_FILE.toFile().getPath(), TARGET_FILE.toFile().getPath());
+
+        // Verify the operation was successful
+        assertTrue(result, "Concatenation should succeed");
+
+        // Read the content of the target file to verify concatenation
+        String targetContent = Files.readString(TARGET_FILE);
+        assertEquals("Existing content\nSample content for testing", targetContent, "Content should be appended to the target file");
     }
 
 }
