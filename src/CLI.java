@@ -76,13 +76,13 @@ static String cd(String directoryPath) {
 
     // create directory
     static boolean mkdir(String d) {
-        File directory = new File(workingDirectory+"/"+d);
+        File directory = new File(workingDirectory + File.separator + d);
         return directory.exists() || directory.mkdirs();
     }
 
     // remove directory
     static boolean rmdir(String d) {
-        File directoryToBeDeleted = new File(workingDirectory+"/"+d);
+        File directoryToBeDeleted = new File(workingDirectory + File.separator + d);
         File[] allContents = directoryToBeDeleted.listFiles();
         if (allContents != null) {
             for (File file : allContents) {
@@ -97,7 +97,7 @@ static String cd(String directoryPath) {
     }
 
     static String lsAll(String directoryPath) {
-        return listDirectory(new File(directoryPath), true, false);
+        return listDirectory(new File(workingDirectory + File.separator + directoryPath), true, false);
     }
 
     static String lsReverse(String directoryPath) {
@@ -217,8 +217,6 @@ static String cd(String directoryPath) {
         printManager.setPrintStream(new PrintStream(new FileOutputStream(file, false)));
         printManager.print(command + System.getProperty("line.separator")); // Print the command to the file
     }
-
-
 
     // Moves or renames a file or directory
     static boolean mv(String srcPath, String destPath) throws IOException {
