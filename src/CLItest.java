@@ -16,6 +16,9 @@ public class CLItest {
     public void setUp() throws IOException {
         // Ensure the directory structure is created before each test
         Files.createDirectories(TEMP_DIRECTORY);
+        Files.createFile(TEMP_DIRECTORY.resolve("file1.txt"));
+        Files.createFile(TEMP_DIRECTORY.resolve("file2.txt"));
+        Files.createFile(TEMP_DIRECTORY.resolve(".hiddenfile"));
     }
     @Test
     public void rmdirTest() throws IOException {
@@ -48,4 +51,42 @@ public class CLItest {
         assertEquals("The current directory should match the expected path", expectedDirectory, currentDirectory);
 
     }
+    @Test
+    public void lsTest() {
+        String output = CLI.ls(TEMP_DIRECTORY.toString());
+
+        assertTrue("Output should contain file1.txt", output.contains("file1.txt"));
+        assertTrue("Output should contain file2.txt", output.contains("file2.txt"));
+        assertFalse("Output should not contain hidden files", output.contains(".hiddenfile"));
+        String[] lines = output.split("\n");
+        assertEquals("Second file should be file1.txt in reverse order", "file1.txt", lines[0]);
+        assertEquals("First file should be file2.txt in reverse order", "file2.txt", lines[1]);
+
+    }
+
+    @Test
+    public void lsAllTest() {
+        String output = CLI.lsAll(TEMP_DIRECTORY.toString());
+
+        assertTrue("Output should contain file1.txt", output.contains("file1.txt"));
+        assertTrue("Output should contain file2.txt", output.contains("file2.txt"));
+        assertTrue("Output should contain .hiddenfile", output.contains(".hiddenfile"));
+    }
+
+    @Test
+    public void lsReverseTest() {
+        String output = CLI.lsReverse(TEMP_DIRECTORY.toString());
+
+        String[] lines = output.split("\n");
+        assertEquals("First file should be file2.txt in reverse order", "file2.txt", lines[0]);
+        assertEquals("Second file should be file1.txt in reverse order", "file1.txt", lines[1]);
+    }
+
+    @Test
+    public void lsInvalidDirectoryTest() {
+        String output = CLI.ls("invalid/directory/path");
+
+        assertEquals("Directory does not exist.", output);
+    }
 }
+

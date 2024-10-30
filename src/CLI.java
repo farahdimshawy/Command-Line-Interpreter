@@ -1,5 +1,6 @@
 import java.io.File;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -57,4 +58,36 @@ public class CLI {
         }
         return directoryToBeDeleted.delete();
     }
+    static String ls(String directoryPath) {
+        return listDirectory(new File(directoryPath), false, false);
+    }
+
+    static String lsAll(String directoryPath) {
+        return listDirectory(new File(directoryPath), true, false);
+    }
+
+    static String lsReverse(String directoryPath) {
+        return listDirectory(new File(directoryPath), false, true);
+    }
+
+    private static String listDirectory(File directory, boolean showHidden, boolean reverse) {
+        if (!directory.exists() || !directory.isDirectory()) {
+            return "This directory doesn't exist. Please try again.";
+        }
+
+        File[] files = directory.listFiles();
+        if (files == null) return "";
+
+        Arrays.sort(files, reverse ? Comparator.reverseOrder() : Comparator.naturalOrder());
+
+        StringBuilder output = new StringBuilder();
+        for (File file : files) {
+            if (showHidden || !file.isHidden()) {
+                output.append(file.getName()).append("\n");
+            }
+        }
+        return output.toString().trim();
+    }
 }
+
+
