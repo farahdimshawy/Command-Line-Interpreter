@@ -1,4 +1,5 @@
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -87,6 +88,17 @@ public class CLI {
             }
         }
         return output.toString().trim();
+    }
+    static boolean touch(File file) throws IOException {
+        // Check if the parent directory exists and is a directory
+        if (file.getParentFile() != null && !file.getParentFile().exists()) {
+            return false; // Parent directory does not exist
+        }
+        if (!file.exists()) {
+            return file.createNewFile();
+        } else {
+            return file.setLastModified(System.currentTimeMillis());
+        }
     }
 }
 

@@ -2,6 +2,7 @@ import jdk.internal.classfile.impl.TransformImpl;
 import org.junit.Test;
 import org.junit.jupiter.api.BeforeEach;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,6 +13,8 @@ import static org.junit.Assert.*;
 public class CLItest {
     private static final Path TEMP_DIRECTORY = Paths.get("testFile");
     private static final Path DIRECTORY_NAME = Paths.get("new");
+    private static final Path VALID_FILE = TEMP_DIRECTORY.resolve("validFile.txt");
+    private static final Path INVALID_FILE = TEMP_DIRECTORY.resolve("invalidFile.txt");
     @BeforeEach
     public void setUp() throws IOException {
         // Ensure the directory structure is created before each test
@@ -88,5 +91,39 @@ public class CLItest {
 
         assertEquals("Directory does not exist.", output);
     }
+    @Test
+    public void testTouchCreateFile() throws IOException {
+        // Test creating a new file
+        File file = VALID_FILE.toFile();
+        boolean result = CLI.touch(file);
+
+        assertTrue("File should be created successfully", result);
+        assertTrue("File should exist after creation", file.exists());
+    }
+
+    @Test
+    public void testTouchUpdateFile() throws IOException {
+        // Create a file first
+        File file = VALID_FILE.toFile();
+        file.createNewFile();
+
+        // Update the file's last modified time
+        boolean result = CLI.touch(file);
+
+        assertTrue("File should be updated successfully", result);
+        assertTrue("File should exist after update", file.exists());
+        assertTrue("File's last modified time should be updated", file.lastModified() > System.currentTimeMillis() - 1000);
+    }
+
+    @Test
+    public void testTouchMissingParentDirectory() throws IOException {
+        // Test creating a file with a missing parent directory
+        File file = INVALID_FILE.toFile();
+        boolean result = CLI.touch(file);
+
+        assertFalse("File should not be created because the parent directory does not exist", result);
+        assertFalse("File should not exist", file.exists());
+    }
+
 }
 
