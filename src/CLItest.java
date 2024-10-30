@@ -1,4 +1,4 @@
-import jdk.internal.classfile.impl.TransformImpl;
+
 import org.junit.Test;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static jdk.internal.org.jline.utils.InfoCmp.Capability.lines;
 import static org.junit.Assert.*;
 
 public class CLItest {
@@ -66,19 +65,17 @@ public class CLItest {
     }
 
     @Test
-    public void rmdirTest() throws IOException {
+    public void rmdirTest() {
         Path pathToBeDeleted = TEMP_DIRECTORY.resolve(DIRECTORY_NAME);
 
         boolean result = CLI.rmdir(pathToBeDeleted.toFile());
 
         assertTrue(result);
-        assertFalse(
-                "Directory still exists",
-                Files.exists(pathToBeDeleted));
+        assertFalse("Directory still exists", Files.exists(pathToBeDeleted));
     }
 
     @Test
-    public void mkdirTest() throws IOException {
+    public void mkdirTest() {
         Path newDirectory = TEMP_DIRECTORY.resolve("newDir");
 
         boolean result = CLI.mkdir(newDirectory.toFile());
@@ -88,7 +85,7 @@ public class CLItest {
     }
 
     @Test
-    public void pwdTest() throws IOException {
+    public void pwdTest() {
         String currentDirectory = CLI.pwd();
 
         // Get the expected current directory using the Java NIO Paths class
@@ -297,7 +294,7 @@ public class CLItest {
         // Convert the List to an array
         String[] linesArray = lines.toArray(new String[0]);
         // Sort the array
-        Arrays.sort(linesArray, String.CASE_INSENSITIVE_ORDER); // Sort alphabetically, case insensitive
+        Arrays.sort(linesArray);
         String check = String.join("\n", linesArray);
         assertEquals(check, CLI.piping("cat testFolder/pipingFile.txt | sort"));
     }
