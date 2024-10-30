@@ -100,6 +100,146 @@ public class CLI {
             return file.setLastModified(System.currentTimeMillis());
         }
     }
+    private static File workingDirectory = new File(System.getProperty("user.dir"));
+
+    static File makeAbsolute(String srcPath) {
+        File f = new File(srcPath);
+        if (!f.isAbsolute()) {
+            f = new File(workingDirectory.getAbsolutePath(), srcPath);
+        }
+        return f.getAbsoluteFile();
+    }
+     static class PrintManager{
+        private final int NewLineLimit = 8;
+        private String buff = "";
+        private int newLineCount = 0;
+        private PrintStream outputStream = System.out;
+        public void setPrintStream(PrintStream p){
+            if(outputStream != System.out){
+                outputStream.close();
+            }
+            outputStream = p;
+        }
+
+        public  void print(){
+            int i;
+            for(i = 0;i < buff.length() && newLineCount < NewLineLimit; i++){
+                if(buff.charAt(i) == '\n')
+                    newLineCount++;
+                outputStream.print(buff.charAt(i));
+            }
+            buff = buff.substring(i);
+            if (newLineCount == NewLineLimit)
+                outputStream.print("...");
+        }
+        public void print(String s){
+            if(outputStream == System.out) {
+                buff += s;
+                if (newLineCount < NewLineLimit)
+                    print();
+            }
+            else{
+                outputStream.print(s);
+            }
+        }
+        public  void println(String s){
+            print(s + System.getProperty("line.separator"));
+        }
+//         //clears all previous commands in console
+//         public void clear(){
+//             for(int i = 0;i < 100;i++){
+//                 outputStream.println();
+//             }
+//         }
+//         public void printMore(){
+//             newLineCount = 0;
+//             print();
+//         }
+
+
+    }
+     static PrintManager printManager = new PrintManager();
+    static void redirectAppendToFile(String command) throws IOException {
+        String filePath = command.substring(command.indexOf(">>") + 2).trim();
+        //command = command.substring(0, command.indexOf(">>")).trim();
+        File file = makeAbsolute(filePath);
+        printManager.setPrintStream(new PrintStream(new FileOutputStream(file, true)));
+        //printManager.print(command + System.getProperty("line.separator")); // Print the command to the file
+
+    }
+
+    static void redirectOverwriteToFile(String command) throws IOException {
+        String filePath = command.substring(command.indexOf(">") + 1).trim();
+        command = command.substring(0, command.indexOf(">")).trim();
+        File file = makeAbsolute(filePath);
+        printManager.setPrintStream(new PrintStream(new FileOutputStream(file, false)));
+        printManager.print(command + System.getProperty("line.separator")); // Print the command to the file
+    }
+
+    // Moves or renames a file or directory
+    static boolean mv(String srcPath, String destPath) throws IOException {
+        File src = makeAbsolute(srcPath);
+        File dst = makeAbsolute(destPath);
+        if (!src.exists()) {
+            throw new NoSuchFileException(src.getAbsolutePath(), null, "does not exist.");
+        }
+        if (dst.isFile()) {
+            throw new IOException("Can't move into file.");
+        }
+        if (!dst.exists()) { // Renaming
+            Files.move(src.toPath(), src.toPath().resolveSibling(dst.getName()));
+        } else {
+            Files.move(src.toPath(), dst.toPath().resolve(src.toPath().getFileName()), StandardCopyOption.REPLACE_EXISTING);
+        }
+        return true;
+    }
+
+    // Deletes a file given a specific path
+    static boolean rm(String srcPath) throws IOException {
+        File f = makeAbsolute(srcPath);
+        if (!f.exists()) throw new NoSuchFileException(srcPath, null, "does not exist.");
+        else if (f.isDirectory()) throw new IOException("Cannot delete directory.");
+        else if (!f.delete()) throw new IOException("Cannot delete file.");
+        return true;
+    }
+
+    // Concatenates a file and returns its content as a String
+    static String cat(String f1) throws IOException {
+        File file = makeAbsolute(f1);
+        if (file.exists()) {
+            StringBuilder content = new StringBuilder();
+            try (BufferedReader in = new BufferedReader(new FileReader(file))) {
+                String line;
+                while ((line = in.readLine()) != null) {
+                    content.append(line).append(System.lineSeparator());
+                }
+            }
+            return content.toString().trim();
+        } else {
+            throw new NoSuchFileException(file.getAbsolutePath(), null, "does not exist");
+        }
+    }
+
+    // Concatenates the contents of one file to another file
+    static boolean cat(String src, String dest) throws IOException {
+        File infile = makeAbsolute(src);
+        File outfile = makeAbsolute(dest);
+        if (!infile.exists() || !outfile.exists()) throw new IOException("No such file exists.");
+
+        try (FileInputStream instream = new FileInputStream(infile);
+             FileOutputStream outstream = new FileOutputStream(outfile, true)) {
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = instream.read(buffer)) > 0) {
+                outstream.write(buffer, 0, length);
+            }
+        }
+        return true;
+    }
+
+    public static void exit() {
+        System.exit(0);
+    }
 }
 
 
