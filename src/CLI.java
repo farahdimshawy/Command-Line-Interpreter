@@ -31,6 +31,9 @@ public class CLI {
     }};
 
     // print working directory
+    static String pwdTests(){
+        return System.getProperty("user.dir");
+    }
     static String pwd(){
         return workingDirectory.getAbsolutePath();
     }
@@ -76,13 +79,13 @@ static String cd(String directoryPath) {
 
     // create directory
     static boolean mkdir(String d) {
-        File directory = new File(workingDirectory + File.separator + d);
+        File directory = new File(CLI.pwdTests() + File.separator + d);
         return directory.exists() || directory.mkdirs();
     }
 
     // remove directory
     static boolean rmdir(String d) {
-        File directoryToBeDeleted = new File(workingDirectory + File.separator + d);
+        File directoryToBeDeleted = new File(d);
         File[] allContents = directoryToBeDeleted.listFiles();
         if (allContents != null) {
             for (File file : allContents) {
@@ -97,7 +100,7 @@ static String cd(String directoryPath) {
     }
 
     static String lsAll(String directoryPath) {
-        return listDirectory(new File(workingDirectory + File.separator + directoryPath), true, false);
+        return listDirectory(new File(directoryPath), true, false);
     }
 
     static String lsReverse(String directoryPath) {

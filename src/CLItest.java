@@ -16,18 +16,22 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class CLItest {
-    private static final Path TEMP_DIRECTORY = Paths.get("testFolder");
-    private static final Path DIRECTORY_NAME = Paths.get("newDir");
+    private static final Path TEMP_DIRECTORY = Paths.get(System.getProperty("user.dir")+"/"+"testFolder");
+    private static final Path DIRECTORY_NAME = Paths.get("newFolder");
     private static final Path VALID_FILE = TEMP_DIRECTORY.resolve("validFile.txt");
     private static final Path INVALID_FILE = TEMP_DIRECTORY.resolve("invalidFile.txt");
     private static final Path F2 = TEMP_DIRECTORY.resolve("F2.txt");
     private static final Path F1 = TEMP_DIRECTORY.resolve("F1.txt");
     private static final Path SF = TEMP_DIRECTORY.resolve("sf.txt");
-    private static final Path MF = TEMP_DIRECTORY.resolve("mf.txt");
+    private static final Path MF = TEMP_DIRECTORY.resolve("moveFile");
     private static final Path NEW = TEMP_DIRECTORY.resolve("new.txt");
+    private static final Path MOVE_DIR = TEMP_DIRECTORY.resolve("moveDir");
     private static final Path TARGET_FILE = TEMP_DIRECTORY.resolve("targetFile.txt");
     private static final Path REDIRECT_FILE = TEMP_DIRECTORY.resolve("redirectFile.txt");
+    private static final Path REMOVE_FILE = TEMP_DIRECTORY.resolve("removeFile.txt");
     //private static final Path PIPING_FILE = TEMP_DIRECTORY.resolve("pipingFile.txt");
+    private static final Path CAT_FILE = TEMP_DIRECTORY.resolve("catFile.txt");
+    private static final Path CAT2_FILE = TEMP_DIRECTORY.resolve("cat2.txt");
     private static final Path PIPE_FILE = TEMP_DIRECTORY.resolve("pipe.txt");
 
 
@@ -144,6 +148,17 @@ public class CLItest {
 
         assertEquals("The cd command should change to the home directory using an empty string.", expectedHomeDirectory, result);
     }
+
+
+    @Test
+    public void mkdirTest() {
+        Path newDirectory = TEMP_DIRECTORY.resolve(DIRECTORY_NAME);
+
+        boolean result = CLI.mkdir("testFolder/newFolder");
+
+        assertTrue("Failed to create the directory", result);
+        assertTrue("This directory doesn't exist. Please try again", Files.exists(newDirectory));
+    }
     @Test
     public void rmdirTest() {
         Path pathToBeDeleted = TEMP_DIRECTORY.resolve(DIRECTORY_NAME);
@@ -151,17 +166,7 @@ public class CLItest {
         boolean result = CLI.rmdir(pathToBeDeleted.toString());
 
         assertTrue(result);
-        assertFalse("Directory still exists", Files.exists(pathToBeDeleted));
-    }
-
-    @Test
-    public void mkdirTest() {
-        Path newDirectory = TEMP_DIRECTORY.resolve("newDir");
-
-        boolean result = CLI.mkdir(newDirectory.toString());
-
-        assertTrue("Failed to create the directory", result);
-        assertTrue("This directory doesn't exist. Please try again", Files.exists(newDirectory));
+        assertFalse("Directory still exists" + pathToBeDeleted.toString(), Files.exists(pathToBeDeleted));
     }
 
     @Test
@@ -170,7 +175,7 @@ public class CLItest {
         //CLI cmd = new CLI();
 
         // Get the current working directory using the pwd method
-        String currentDir = CLI.pwd();
+        String currentDir = CLI.pwdTests();
 
         // Get the expected current directory using the Java NIO Paths class
         String expectedDirectory = System.getProperty("user.dir");
@@ -205,8 +210,8 @@ public class CLItest {
         String[] dir = directory.list();
         assert dir != null;
         Arrays.sort(dir);
-        assertTrue("Output should contain", output.contains(dir[0]));
-        assertTrue("Output should contain", output.contains(dir[1]));
+        assertTrue("Output should contain" , output.contains(dir[0]));
+        assertTrue("Output should contain" , output.contains(dir[1]));
         assertTrue("Output should contain .hiddenfile", output.contains(".hiddenfile"));
     }
 
@@ -290,17 +295,19 @@ public class CLItest {
 
     @Test
     public void mvTest() throws IOException {
-        // Ensure the target file does not exist for a clean move operation
-        if (Files.exists(TARGET_FILE)) {
-            Files.delete(TARGET_FILE);
-        }
+        assertTrue("Source file does not exist", Files.exists(MF));
 
         // Move the source file to the target location
-        boolean result = CLI.mv(MF.toFile().getPath(), TARGET_FILE.toFile().getPath());
+        boolean result = CLI.mv(MF.toFile().getPath(), MOVE_DIR.toFile().getPath());
 
+        // Assert that the move operation was successful
         assertTrue("File move failed", result);
+
+        // Assert that the source file no longer exists
         assertFalse("Source file should no longer exist", Files.exists(MF));
-        assertTrue("Target file does not exist", Files.exists(TARGET_FILE));
+
+        // Assert that the target file now exists
+        assertTrue("Target file does not exist", Files.exists(MOVE_DIR));
     }
 
     @Test
@@ -331,21 +338,21 @@ public class CLItest {
     @Test
     public void rmTest() throws IOException {
         // Ensure the target file exists for the test
-        if (!Files.exists(TARGET_FILE)) {
-            Files.createFile(TARGET_FILE);
+        if (!Files.exists(REMOVE_FILE)) {
+            Files.createFile(REMOVE_FILE);
         }
 
-        boolean result = CLI.rm(TARGET_FILE.toFile().getPath());
+        boolean result = CLI.rm(REMOVE_FILE.toFile().getPath());
 
         assertTrue("File removal failed", result);
-        assertFalse("File should have been deleted", Files.exists(TARGET_FILE));
+        assertFalse("File should have been deleted", Files.exists(REMOVE_FILE));
     }
 
 
     @Test
     public void catSingleParameterTest() throws IOException {
         // Test the `cat` function with one parameter to read content
-        String content = CLI.cat(SF.toFile().getPath());
+        String content = CLI.cat(CAT_FILE.toFile().getPath());
 
         assertNotNull("Content should not be null", content);
         assertEquals("Content should match file content", "Sample content for testing", content);
@@ -357,7 +364,7 @@ public class CLItest {
         Files.writeString(TARGET_FILE, "Existing content\n");
 
         // Use the `cat` function with two parameters to concatenate content from SF to TARGET_FILE
-        boolean result = CLI.cat(NEW.toFile().getPath(), TARGET_FILE.toFile().getPath());
+        boolean result = CLI.cat(CAT2_FILE.toFile().getPath(), TARGET_FILE.toFile().getPath());
 
         // Verify the operation was successful
         assertTrue("Concatenation should succeed", result);
@@ -382,7 +389,7 @@ public class CLItest {
         // Sort the array
         Arrays.sort(linesArray);
         String check = String.join("\n", linesArray);
-        assertEquals(check, CLI.piping("cat testFolder/pipe.txt | sort"));
+        assertEquals(check, CLI.piping("cat "+ CLI.pwdTests() +"/testFolder/pipe.txt | sort"));
     }
 }
 
