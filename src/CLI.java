@@ -11,7 +11,7 @@ public class CLI {
     public CLI() {
     }
 
-    private static final Map<String, String> commands = new HashMap<String, String>() {{
+   private static final Map<String, String> commands = new HashMap<String, String>() {{
         put("pwd", "Print Working Directory - Displays the current directory path.");
         put("cd", "Change Directory - Changes the current directory.");
         put("ls", "List - Lists files and directories in the current directory.");
@@ -28,9 +28,11 @@ public class CLI {
         put("|", "Pipe - Passes the output of one command as input to another command.");
     }};
 
+    // print working directory
     static String pwdTests() {
         return System.getProperty("user.dir");
     }
+
     static String pwd() {
         return workingDirectory.getAbsolutePath();
     }
@@ -45,27 +47,38 @@ public class CLI {
         return file.getAbsoluteFile();
     }
 
-    static public String cd(String path) {
+    // change directory
+    static String cd(String directoryPath) {
 
-        Path newPath = workingDirectory.toPath().resolve(path).normalize();
-        File newDir = newPath.toFile();
-        if (path.equals("~")) {
-            return System.getProperty("user.home");
-       }
-        if(newDir.isDirectory()){
-            workingDirectory = newDir;
-            return workingDirectory.getAbsolutePath();
+        if (directoryPath == null || directoryPath.trim().isEmpty()) {
+            directoryPath = workingDirectory.getParentFile().toString();
+        } else if (directoryPath.equals("~")) {
+            directoryPath = workingDirectory.getParentFile().toString();
         }
-        else{
-            String s = "This directory doesn't exist. Please try again.";
-            return s;
+
+        File newDirectory;
+
+        if (directoryPath.equals("..")) {
+            newDirectory = workingDirectory.getParentFile();
+            if (newDirectory == null) {
+                return "Already at the root directory.";
+            }
+        } else {
+            newDirectory = makeAbsolute(directoryPath);
         }
+
+        if (!newDirectory.exists() || !newDirectory.isDirectory()) {
+            return "This directory doesn't exist. Please try again.";
+        }
+
+        workingDirectory = newDirectory;
+        return pwd(); // Return the new working directory path
     }
+
 
     // create directory
     static boolean mkdir(String d) {
-        Path path = workingDirectory.toPath().resolve(d).normalize();
-        File directory = path.toFile();
+        File directory = new File(workingDirectory + File.separator + d);
         return directory.exists() || directory.mkdirs();
     }
 
@@ -204,7 +217,7 @@ public class CLI {
         command = command.substring(0, command.indexOf(">")).trim();
         File file = makeAbsolute(filePath);
         printManager.setPrintStream(new PrintStream(new FileOutputStream(file, false)));
-        printManager.print(command + System.getProperty("line.separator")); // Print the command to the file
+        printManager.print(command ); // Print the command to the file
     }
 
     // Moves or renames a file or directory
@@ -215,7 +228,8 @@ public class CLI {
             throw new NoSuchFileException(src.getAbsolutePath(), null, "does not exist.");
         }
         if (dst.isFile()) {
-            throw new IOException("Can't move into file.");
+            //throw new IOException("Can't move into file.");
+            Files.move(src.toPath(), dst.toPath().resolveSibling(dst.getName()));
         }
         if (!dst.exists()) { // Renaming
             Files.move(src.toPath(), src.toPath().resolveSibling(dst.getName()));
@@ -252,20 +266,54 @@ public class CLI {
     }
 
     // Concatenates the contents of one file to another file
-    static boolean cat(String src, String dest) throws IOException {
-        File infile = makeAbsolute(src);
-        File outfile = makeAbsolute(dest);
-        if (!infile.exists() || !outfile.exists()) throw new IOException("No such file exists.");
+    static String[] cat(String src, String dest) throws IOException {
+//        File infile = makeAbsolute(src);
+//        File outfile = makeAbsolute(dest);
+//        if (!infile.exists() || !outfile.exists()) throw new IOException("No such file exists.");
+//
+//        try (FileInputStream instream = new FileInputStream(infile);
+//             FileOutputStream outstream = new FileOutputStream(outfile, true)) {
+//            byte[] buffer = new byte[1024];
+//            int length;
+//            while ((length = instream.read(buffer)) > 0) {
+//                outstream.write(buffer, 0, length);
+//            }
+//        }
+//        return true;
+        File file = makeAbsolute(src);
+        File file1 = makeAbsolute(dest);
+        StringBuilder content = new StringBuilder();
+        StringBuilder content1 = new StringBuilder();
 
-        try (FileInputStream instream = new FileInputStream(infile);
-             FileOutputStream outstream = new FileOutputStream(outfile, true)) {
-            byte[] buffer = new byte[1024];
-            int length;
-            while ((length = instream.read(buffer)) > 0) {
-                outstream.write(buffer, 0, length);
+
+        if (file.exists()) {
+            try (BufferedReader in = new BufferedReader(new FileReader(file))) {
+                String line;
+                while ((line = in.readLine()) != null) {
+                    content.append(line).append(System.lineSeparator());
+                }
             }
+//            return content.toString().trim();
+                    //System.out.println(content +"\n");
+
+        } else {
+            throw new NoSuchFileException(file.getAbsolutePath(), null, "does not exist");
         }
-        return true;
+        if (file1.exists()) {
+            try (BufferedReader in = new BufferedReader(new FileReader(file1))) {
+                String line;
+                while ((line = in.readLine()) != null) {
+                    content1.append(line).append(System.lineSeparator());
+                }
+                       // System.out.println(content1 +"\n");
+
+            }
+        } else {
+            throw new NoSuchFileException(file1.getAbsolutePath(), null, "does not exist");
+        }
+        return new String[]{content.toString().trim(),content1.toString().trim()} ;
+
+
     }
 
     // sort (to test |)
@@ -279,6 +327,7 @@ public class CLI {
     static Object piping(String command) throws IOException {
         // Split commands by pipe.txt character
         String[] commands = command.split("\\|");
+        CLI cli = new CLI();
         String output = null; // To hold the output of each command
 
         for (int i = 0; i < commands.length; i++) {
