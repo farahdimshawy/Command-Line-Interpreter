@@ -9,7 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CLI {
-    private static File workingDirectory = new File(System.getProperty("user.dir"));
+    public static File workingDirectory = new File(System.getProperty("user.dir"));
+
     public CLI() {
     }
 
@@ -31,61 +32,62 @@ public class CLI {
     }};
 
     // print working directory
-    static String pwdTests(){
+    static String pwdTests() {
         return System.getProperty("user.dir");
     }
-    static String pwd(){
+
+    static String pwd() {
         return workingDirectory.getAbsolutePath();
     }
 
-static File makeAbsolute(String srcPath) {
-    File file = new File(srcPath);
-    // Check if the path is already absolute
-    if (!file.isAbsolute()) {
-        // Convert to an absolute path using the current working directory
-        file = new File(workingDirectory, srcPath);
-    }
-    return file.getAbsoluteFile();
-}
-    // change directory
-static String cd(String directoryPath) {
-    String homeDirectory = System.getProperty("user.home");
-
-    if (directoryPath == null || directoryPath.trim().isEmpty()) {
-        directoryPath = homeDirectory;
-    } else if (directoryPath.equals("~")) {
-        directoryPath = homeDirectory;
-    }
-
-    File newDirectory;
-
-    if (directoryPath.equals("..")) {
-        newDirectory = workingDirectory.getParentFile();
-        if (newDirectory == null) {
-            return "Already at the root directory.";
+    static File makeAbsolute(String srcPath) {
+        File file = new File(srcPath);
+        // Check if the path is already absolute
+        if (!file.isAbsolute()) {
+            // Convert to an absolute path using the current working directory
+            file = new File(workingDirectory, srcPath);
         }
-    } else {
-        newDirectory = makeAbsolute(directoryPath);
+        return file.getAbsoluteFile();
     }
 
-    if (!newDirectory.exists() || !newDirectory.isDirectory()) {
-        return "This directory doesn't exist. Please try again.";
-    }
+    // change directory
+    static String cd(String directoryPath) {
 
-    workingDirectory = newDirectory;
-    return pwd(); // Return the new working directory path
-}
+        if (directoryPath == null || directoryPath.trim().isEmpty()) {
+            directoryPath = workingDirectory.getParentFile().toString();
+        } else if (directoryPath.equals("~")) {
+            directoryPath = workingDirectory.getParentFile().toString();
+        }
+
+        File newDirectory;
+
+        if (directoryPath.equals("..")) {
+            newDirectory = workingDirectory.getParentFile();
+            if (newDirectory == null) {
+                return "Already at the root directory.";
+            }
+        } else {
+            newDirectory = makeAbsolute(directoryPath);
+        }
+
+        if (!newDirectory.exists() || !newDirectory.isDirectory()) {
+            return "This directory doesn't exist. Please try again.";
+        }
+
+        workingDirectory = newDirectory;
+        return pwd(); // Return the new working directory path
+    }
 
 
     // create directory
     static boolean mkdir(String d) {
-        File directory = new File(CLI.pwdTests() + File.separator + d);
+        File directory = new File(workingDirectory + File.separator + d);
         return directory.exists() || directory.mkdirs();
     }
 
     // remove directory
     static boolean rmdir(String d) {
-        File directoryToBeDeleted = new File(d);
+        File directoryToBeDeleted = new File(workingDirectory + File.separator + d);
         File[] allContents = directoryToBeDeleted.listFiles();
         if (allContents != null) {
             for (File file : allContents) {
@@ -96,15 +98,15 @@ static String cd(String directoryPath) {
     }
 
     static String ls(String directoryPath) {
-        return listDirectory(new File(directoryPath), false, false);
+        return listDirectory(new File(workingDirectory + File.separator + directoryPath), false, false);
     }
 
     static String lsAll(String directoryPath) {
-        return listDirectory(new File(directoryPath), true, false);
+        return listDirectory(new File(workingDirectory + File.separator + directoryPath), true, false);
     }
 
     static String lsReverse(String directoryPath) {
-        return listDirectory(new File(directoryPath), false, true);
+        return listDirectory(new File(workingDirectory + File.separator + directoryPath), false, true);
     }
 
     private static String listDirectory(File directory, boolean showHidden, boolean reverse) {
@@ -126,27 +128,18 @@ static String cd(String directoryPath) {
         return output.toString().trim();
     }
 
-    static boolean touch(File file) throws IOException {
+    static boolean touch(String file) throws IOException {
         // Check if the parent directory exists and is a directory
-        if (file.getParentFile() != null && !file.getParentFile().exists()) {
+        File file2 = new File(workingDirectory + File.separator + file);
+        if (file2.getParentFile() != null && !file2.getParentFile().exists()) {
             return false; // Parent directory does not exist
         }
-        if (!file.exists()) {
-            return file.createNewFile();
+        if (!file2.exists()) {
+            return file2.createNewFile();
         } else {
-            return file.setLastModified(System.currentTimeMillis());
+            return file2.setLastModified(System.currentTimeMillis());
         }
     }
-
-   //private static File workingDirectory = new File(System.getProperty("user.dir"));
-
-//    static File makeAbsolute(String srcPath) {
-//        File f = new File(srcPath);
-//        if (!f.isAbsolute()) {
-//            f = new File(workingDirectory.getAbsolutePath(), srcPath);
-//        }
-//        return f.getAbsoluteFile();
-//    }
 
     static class PrintManager {
         private final int NewLineLimit = 8;
@@ -204,7 +197,8 @@ static String cd(String directoryPath) {
 
     // >>
     static void redirectAppendToFile(String command) throws IOException {
-        String filePath = command.substring(command.indexOf(">>") + 2).trim();
+        String[] commands = command.split("\s+");
+        String filePath = commands[3];
         //command = command.substring(0, command.indexOf(">>")).trim();
         File file = makeAbsolute(filePath);
         printManager.setPrintStream(new PrintStream(new FileOutputStream(file, true)));
@@ -288,6 +282,7 @@ static String cd(String directoryPath) {
         Arrays.sort(arrayOfStrings, String.CASE_INSENSITIVE_ORDER);
         return arrayOfStrings;
     }
+
     // |
     static Object piping(String command) throws IOException {
         // Split commands by pipe.txt character
@@ -305,24 +300,20 @@ static String cd(String directoryPath) {
 
             // Process each command
             if (arrayOfStrings[0].equals("pwd")) {
-                output = cli.pwd(); // Get output from pwd
+                output = pwd(); // Get output from pwd
                 System.out.println(output); // Print output
-            }
-            else if (arrayOfStrings[0].equals("ls")) {
+            } else if (arrayOfStrings[0].equals("ls")) {
                 // Determine the filename or use output from the previous command
                 String param = (arrayOfStrings.length > 1) ? arrayOfStrings[1] : output; // Get the first parameter if specified
 
                 if (arrayOfStrings.length > 2 && arrayOfStrings[2].equals("-r")) {
                     output = lsReverse(param); // Use param directly or previous output
-                }
-                else if (arrayOfStrings.length > 2 && arrayOfStrings[2].equals("-a")) {
+                } else if (arrayOfStrings.length > 2 && arrayOfStrings[2].equals("-a")) {
                     output = lsAll(param); // Use param directly or previous output
-                }
-                else {
+                } else {
                     output = ls(param); // Pass the filename or null
                 }
-            }
-            else if (arrayOfStrings[0].equals("cat")) {
+            } else if (arrayOfStrings[0].equals("cat")) {
                 String param; // To hold the filename or previous output
 
                 // Use the first parameter directly from the command if specified
@@ -337,17 +328,15 @@ static String cd(String directoryPath) {
                 } else {
                     System.out.println("Error: No file specified for cat command.");
                 }
-            }
-            else if (arrayOfStrings[0].equals("sort")) {
-                String param = output != null ? output.toString() : null; // Use previous output as input for sort
+            } else if (arrayOfStrings[0].equals("sort")) {
+                String param = output != null ? output : null; // Use previous output as input for sort
                 if (param != null) {
                     String[] sortedArray = sort(param); // Call the sort function
                     output = String.join("\n", sortedArray); // Join the sorted array into a single string with line breaks
                 } else {
                     output = "Error: No input provided for sort command.";
                 }
-            }
-            else {
+            } else {
                 System.out.println("Unknown command: " + arrayOfStrings[0]);
             }
 

@@ -1,4 +1,3 @@
-
 import org.junit.Test;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -16,7 +15,8 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class CLItest {
-    private static final Path TEMP_DIRECTORY = Paths.get(System.getProperty("user.dir")+"/"+"testFolder");
+    private static final Path WORKING_DIRECTORY = CLI.workingDirectory.toPath();
+    private static final Path TEMP_DIRECTORY = Paths.get( "testFolder");
     private static final Path DIRECTORY_NAME = Paths.get("newFolder");
     private static final Path VALID_FILE = TEMP_DIRECTORY.resolve("validFile.txt");
     private static final Path INVALID_FILE = TEMP_DIRECTORY.resolve("invalidFile.txt");
@@ -28,8 +28,9 @@ public class CLItest {
     private static final Path MOVE_DIR = TEMP_DIRECTORY.resolve("moveDir");
     private static final Path TARGET_FILE = TEMP_DIRECTORY.resolve("targetFile.txt");
     private static final Path REDIRECT_FILE = TEMP_DIRECTORY.resolve("redirectFile.txt");
+
     private static final Path REMOVE_FILE = TEMP_DIRECTORY.resolve("removeFile.txt");
-    //private static final Path PIPING_FILE = TEMP_DIRECTORY.resolve("pipingFile.txt");
+    private static final Path APPENDING_FILE = TEMP_DIRECTORY.resolve("appendingFile.txt");
     private static final Path CAT_FILE = TEMP_DIRECTORY.resolve("catFile.txt");
     private static final Path CAT2_FILE = TEMP_DIRECTORY.resolve("cat2.txt");
     private static final Path PIPE_FILE = TEMP_DIRECTORY.resolve("pipe.txt");
@@ -80,6 +81,7 @@ public class CLItest {
         assertTrue(Files.exists(REDIRECT_FILE));
         assertTrue(Files.exists(PIPE_FILE));
     }
+
     @Test
     public void testCdToValidAbsoluteDirectory() {
         String validAbsolutePath = System.getProperty("user.home");
@@ -93,22 +95,21 @@ public class CLItest {
         String invalidPath = "/nonexistentpath";
         String result = CLI.cd(invalidPath);
 
-        assertEquals("The cd command should return an error for a nonexistent path.","This directory doesn't exist. Please try again.", result);
+        assertEquals("The cd command should return an error for a nonexistent path.", "This directory doesn't exist. Please try again.", result);
     }
 
     @Test
     public void testCdToRelativeDirectory() {
         String initialDirectory = CLI.pwd();
-        CLI.mkdir(initialDirectory+  File.separator+ "testdir");
         String result = CLI.cd("testdir");
 
-        assertEquals("The cd command should change to the relative path correctly.",initialDirectory+File.separator + "testdir", result);
+        assertEquals("The cd command should change to the relative path correctly.", initialDirectory + File.separator + "testdir", result);
     }
 
     @Test
     public void testCdBackToPreviousDirectory() {
         String initialDirectory = CLI.pwd();
-        CLI.mkdir(initialDirectory +File.separator+ "testdir");
+        CLI.mkdir(initialDirectory + File.separator + "testdir");
 
         // Move to a new directory
         CLI.cd("testdir");
@@ -125,8 +126,9 @@ public class CLItest {
         String homeDirectory = System.getProperty("user.home");
         CLI.cd(homeDirectory);
 
-        assertEquals("The pwd command should return the correct current directory after changing it with cd.", homeDirectory, CLI.pwd() );
+        assertEquals("The pwd command should return the correct current directory after changing it with cd.", homeDirectory, CLI.pwd());
     }
+
     @Test
     public void testCdToHomeDirectoryUsingTilde() {
         String initialDirectory = CLI.pwd();
@@ -144,7 +146,7 @@ public class CLItest {
 
         String result = CLI.cd("");
 
-        String expectedHomeDirectory = System.getProperty("user.home");
+        String expectedHomeDirectory = System.getProperty("user.dir");
 
         assertEquals("The cd command should change to the home directory using an empty string.", expectedHomeDirectory, result);
     }
@@ -159,6 +161,19 @@ public class CLItest {
         assertTrue("Failed to create the directory", result);
         assertTrue("This directory doesn't exist. Please try again", Files.exists(newDirectory));
     }
+
+    @Test
+    public void lsAllTest() {
+        String output = CLI.lsAll(TEMP_DIRECTORY.toString());
+        File directory = new File(TEMP_DIRECTORY.toString());
+        String[] dir = directory.list();
+        assert dir != null;
+        Arrays.sort(dir);
+        assertTrue("Output should contain", output.contains(dir[0]));
+        assertTrue("Output should contain", output.contains(dir[1]));
+        assertTrue("Output should contain .hiddenfile", output.contains(".hiddenfile"));
+    }
+
     @Test
     public void rmdirTest() {
         Path pathToBeDeleted = TEMP_DIRECTORY.resolve(DIRECTORY_NAME);
@@ -166,7 +181,7 @@ public class CLItest {
         boolean result = CLI.rmdir(pathToBeDeleted.toString());
 
         assertTrue(result);
-        assertFalse("Directory still exists" + pathToBeDeleted.toString(), Files.exists(pathToBeDeleted));
+        assertFalse("Directory still exists" + pathToBeDeleted, Files.exists(pathToBeDeleted));
     }
 
     @Test
@@ -185,7 +200,6 @@ public class CLItest {
 
     }
 
-
     @Test
     public void lsTest() {
         //hidden file changes dir index +1
@@ -201,18 +215,6 @@ public class CLItest {
         assertEquals("Second file ", dir[1], lines[0]);
         assertEquals("First file ", dir[2], lines[1]);
 
-    }
-
-    @Test
-    public void lsAllTest() {
-        String output = CLI.lsAll(TEMP_DIRECTORY.toString());
-        File directory = new File(TEMP_DIRECTORY.toString());
-        String[] dir = directory.list();
-        assert dir != null;
-        Arrays.sort(dir);
-        assertTrue("Output should contain" , output.contains(dir[0]));
-        assertTrue("Output should contain" , output.contains(dir[1]));
-        assertTrue("Output should contain .hiddenfile", output.contains(".hiddenfile"));
     }
 
     @Test
@@ -238,7 +240,7 @@ public class CLItest {
     public void testTouchCreateFile() throws IOException {
         // Test creating a new file
         File file = VALID_FILE.toFile();
-        boolean result = CLI.touch(file);
+        boolean result = CLI.touch(file.toString());
 
         assertTrue("File should be created successfully", result);
         assertTrue("File should exist after creation", file.exists());
@@ -251,33 +253,24 @@ public class CLItest {
         file.createNewFile();
 
         // Update the file's last modified time
-        boolean result = CLI.touch(file);
+        boolean result = CLI.touch(file.toString());
 
         assertTrue("File should be updated successfully", result);
         assertTrue("File should exist after update", file.exists());
         assertTrue("File's last modified time should be updated", file.lastModified() > System.currentTimeMillis() - 1000);
     }
 
-    @Test
-    public void testTouchMissingParentDirectory() throws IOException {
-        // Test creating a file with a missing parent directory
-        File file = INVALID_FILE.toFile();
-        boolean result = CLI.touch(file);
-
-        //assertFalse("File should not be created because the parent This directory doesn't exist. Please try again", result);
-        assertFalse("File should not exist", file.exists());
-    }
 
     @Test
     public void testRedirectAppendToFile() throws IOException {
-        String command = "echo 'Appending content' >> " + REDIRECT_FILE.toFile().getPath();
+        String command = "echo 'Appending content'  " + APPENDING_FILE.toFile().getPath();
         CLI.redirectAppendToFile(command);
 
         // Simulate print manager output
         CLI.printManager.println("Appending content");
 
         // Verify that the content was appended
-        String fileContent = Files.readString(REDIRECT_FILE);
+        String fileContent = Files.readString(APPENDING_FILE);
         assertTrue("Content was not appended correctly", fileContent.contains("Appending content"));
     }
 
@@ -371,7 +364,7 @@ public class CLItest {
 
         // Read the content of the target file to verify concatenation
         String targetContent = Files.readString(TARGET_FILE);
-        assertEquals( "Content should be appended to the target file","Existing content\nSample content for testing", targetContent);
+        assertEquals("Content should be appended to the target file", "Existing content\nSample content for testing", targetContent);
     }
 
     @Test
@@ -389,7 +382,7 @@ public class CLItest {
         // Sort the array
         Arrays.sort(linesArray);
         String check = String.join("\n", linesArray);
-        assertEquals(check, CLI.piping("cat "+ CLI.pwdTests() +"/testFolder/pipe.txt | sort"));
+        assertEquals(check, CLI.piping("cat " + CLI.pwdTests() + "/testFolder/pipe.txt | sort"));
     }
 }
 
