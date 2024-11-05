@@ -11,7 +11,7 @@ public class CLI {
     public CLI() {
     }
 
-   private static final Map<String, String> commands = new HashMap<String, String>() {{
+    private static final Map<String, String> commands = new HashMap<String, String>() {{
         put("pwd", "Print Working Directory - Displays the current directory path.");
         put("cd", "Change Directory - Changes the current directory.");
         put("ls", "List - Lists files and directories in the current directory.");
@@ -29,10 +29,6 @@ public class CLI {
     }};
 
     // print working directory
-    static String pwdTests() {
-        return System.getProperty("user.dir");
-    }
-
     static String pwd() {
         return workingDirectory.getAbsolutePath();
     }
@@ -192,32 +188,22 @@ public class CLI {
 
     static PrintManager printManager = new PrintManager();
 
-    // >>
-//    static void redirectAppendToFile(String command) throws IOException {
-//        String[] commands = command.split("\s+");
-//        String filePath = commands[3];
-//        //command = command.substring(0, command.indexOf(">>")).trim();
-//        File file = makeAbsolute(filePath);
-//        printManager.setPrintStream(new PrintStream(new FileOutputStream(file, true)));
-//        //printManager.print(command + System.getProperty("line.separator")); // Print the command to the file
-//
-//    }
+
     static void redirectAppendToFile(String command) throws IOException {
         String commands = command;
         String filePath = commands;
         //command = command.substring(0, command.indexOf(">>")).trim();
         File file = makeAbsolute(filePath);
         printManager.setPrintStream(new PrintStream(new FileOutputStream(file, true)));
-//        printManager.print(command + System.getProperty("line.separator")); // Print the command to the file
-
     }
+
     // >
     static void redirectOverwriteToFile(String command) throws IOException {
         String filePath = command.substring(command.indexOf(">") + 1).trim();
         command = command.substring(0, command.indexOf(">")).trim();
         File file = makeAbsolute(filePath);
         printManager.setPrintStream(new PrintStream(new FileOutputStream(file, false)));
-        printManager.print(command ); // Print the command to the file
+        printManager.print(command); // Print the command to the file
     }
 
     // Moves or renames a file or directory
@@ -267,19 +253,6 @@ public class CLI {
 
     // Concatenates the contents of one file to another file
     static String[] cat(String src, String dest) throws IOException {
-//        File infile = makeAbsolute(src);
-//        File outfile = makeAbsolute(dest);
-//        if (!infile.exists() || !outfile.exists()) throw new IOException("No such file exists.");
-//
-//        try (FileInputStream instream = new FileInputStream(infile);
-//             FileOutputStream outstream = new FileOutputStream(outfile, true)) {
-//            byte[] buffer = new byte[1024];
-//            int length;
-//            while ((length = instream.read(buffer)) > 0) {
-//                outstream.write(buffer, 0, length);
-//            }
-//        }
-//        return true;
         File file = makeAbsolute(src);
         File file1 = makeAbsolute(dest);
         StringBuilder content = new StringBuilder();
@@ -293,8 +266,6 @@ public class CLI {
                     content.append(line).append(System.lineSeparator());
                 }
             }
-//            return content.toString().trim();
-                    //System.out.println(content +"\n");
 
         } else {
             throw new NoSuchFileException(file.getAbsolutePath(), null, "does not exist");
@@ -305,19 +276,15 @@ public class CLI {
                 while ((line = in.readLine()) != null) {
                     content1.append(line).append(System.lineSeparator());
                 }
-                       // System.out.println(content1 +"\n");
-
             }
         } else {
             throw new NoSuchFileException(file1.getAbsolutePath(), null, "does not exist");
         }
-        return new String[]{content.toString().trim(),content1.toString().trim()} ;
-
-
+        return new String[]{content.toString().trim(), content1.toString().trim()};
     }
 
     // sort (to test |)
-    static String[] sort(String lines) throws IOException {
+    static String[] sort(String lines) {
         String[] arrayOfStrings = lines.split("\n");
         Arrays.sort(arrayOfStrings, String.CASE_INSENSITIVE_ORDER);
         return arrayOfStrings;
@@ -325,9 +292,8 @@ public class CLI {
 
     // |
     static Object piping(String command) throws IOException {
-        // Split commands by pipe.txt character
+        // Split commands by | character
         String[] commands = command.split("\\|");
-        CLI cli = new CLI();
         String output = null; // To hold the output of each command
 
         for (int i = 0; i < commands.length; i++) {
@@ -369,17 +335,16 @@ public class CLI {
                     System.out.println("Error: No file specified for cat command.");
                 }
             } else if (arrayOfStrings[0].equals("sort")) {
-                String param = output != null ? output : null; // Use previous output as input for sort
+                String param = output; // Use previous output as input for sort
                 if (param != null) {
                     String[] sortedArray = sort(param); // Call the sort function
                     output = String.join("\n", sortedArray); // Join the sorted array into a single string with line breaks
                 } else {
                     output = "Error: No input provided for sort command.";
                 }
-            }else if(arrayOfStrings[0].equals("cd")) {
+            } else if (arrayOfStrings[0].equals("cd")) {
                 cd(output);
-            }
-            else {
+            } else {
                 System.out.println("Unknown command: " + arrayOfStrings[0]);
             }
 
