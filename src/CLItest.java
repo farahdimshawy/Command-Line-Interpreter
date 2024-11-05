@@ -187,13 +187,11 @@ public class CLItest {
     @Test
     public void pwdTest() {
 
-        //CLI cmd = new CLI();
-
         // Get the current working directory using the pwd method
         String currentDir = CLI.pwd();
 
         // Get the expected current directory using the Java NIO Paths class
-        String expectedDirectory = System.getProperty("user.dir");
+        String expectedDirectory = new File("").getAbsolutePath();
 
         // Assert that the current directory is equal to the expected directory
         assertEquals("The current directory should match the expected path", expectedDirectory, currentDir);
@@ -261,18 +259,30 @@ public class CLItest {
     }
 
 
-    @Test
-    public void testRedirectAppendToFile() throws IOException {
-        String command = "echo 'Appending content'  " + APPENDING_FILE.toFile().getPath();
-        CLI.redirectAppendToFile(command);
+//    @Test
+//    public void testRedirectAppendToFile() throws IOException {
+//        String command = "echo 'Appending content'  " + APPENDING_FILE.toFile().getPath();
+//        CLI.redirectAppendToFile(command);
+//
+//        // Simulate print manager output
+//        CLI.printManager.println("Appending content");
+//
+//        // Verify that the content was appended
+//        String fileContent = Files.readString(APPENDING_FILE);
+//        assertTrue("Content was not appended correctly", fileContent.contains("Appending content"));
+//    }
+@Test
+public void testRedirectAppendToFile() throws IOException {
+    String command =  APPENDING_FILE.toFile().getPath();
+    CLI.redirectAppendToFile(command);
 
-        // Simulate print manager output
-        CLI.printManager.println("Appending content");
+    // Simulate print manager output
+    CLI.printManager.println("Appending content");
 
-        // Verify that the content was appended
-        String fileContent = Files.readString(APPENDING_FILE);
-        assertTrue("Content was not appended correctly", fileContent.contains("Appending content"));
-    }
+    // Verify that the content was appended
+    String fileContent = Files.readString(APPENDING_FILE);
+    assertTrue("Content was not appended correctly", fileContent.contains("Appending content"));
+}
 
     @Test
     public void testRedirectOverwriteToFile() throws IOException {

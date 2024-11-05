@@ -180,16 +180,24 @@ public class CLI {
     static PrintManager printManager = new PrintManager();
 
     // >>
+//    static void redirectAppendToFile(String command) throws IOException {
+//        String[] commands = command.split("\s+");
+//        String filePath = commands[3];
+//        //command = command.substring(0, command.indexOf(">>")).trim();
+//        File file = makeAbsolute(filePath);
+//        printManager.setPrintStream(new PrintStream(new FileOutputStream(file, true)));
+//        //printManager.print(command + System.getProperty("line.separator")); // Print the command to the file
+//
+//    }
     static void redirectAppendToFile(String command) throws IOException {
-        String[] commands = command.split("\s+");
-        String filePath = commands[3];
+        String commands = command;
+        String filePath = commands;
         //command = command.substring(0, command.indexOf(">>")).trim();
         File file = makeAbsolute(filePath);
         printManager.setPrintStream(new PrintStream(new FileOutputStream(file, true)));
-        //printManager.print(command + System.getProperty("line.separator")); // Print the command to the file
+//        printManager.print(command + System.getProperty("line.separator")); // Print the command to the file
 
     }
-
     // >
     static void redirectOverwriteToFile(String command) throws IOException {
         String filePath = command.substring(command.indexOf(">") + 1).trim();
