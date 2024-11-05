@@ -23,7 +23,7 @@ public class CLItest {
         private static final Path F2 = TEMP_DIRECTORY.resolve("F2.txt");
         private static final Path F1 = TEMP_DIRECTORY.resolve("F1.txt");
         private static final Path SF = TEMP_DIRECTORY.resolve("sf.txt");
-        private static final Path MF = TEMP_DIRECTORY.resolve("moveFile.txt");
+        private static final Path MF = TEMP_DIRECTORY.resolve("moveFile");
         private static final Path MF2 = TEMP_DIRECTORY.resolve("movetofile.txt");
 
         private static final Path NEW = TEMP_DIRECTORY.resolve("new.txt");
@@ -195,13 +195,11 @@ public class CLItest {
         @Test
         public void pwdTest() {
 
-            //CLI cmd = new CLI();
-
             // Get the current working directory using the pwd method
-            String currentDir = CLI.pwdTests();
+            String currentDir = CLI.pwd();
 
             // Get the expected current directory using the Java NIO Paths class
-            String expectedDirectory = System.getProperty("user.dir");
+            String expectedDirectory = new File("").getAbsolutePath();
 
             // Assert that the current directory is equal to the expected directory
             assertEquals("The current directory should match the expected path", expectedDirectory, currentDir);

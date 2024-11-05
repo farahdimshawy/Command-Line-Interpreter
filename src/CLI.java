@@ -376,7 +376,10 @@ public class CLI {
                 } else {
                     output = "Error: No input provided for sort command.";
                 }
-            } else {
+            }else if(arrayOfStrings[0].equals("cd")) {
+                cd(output);
+            }
+            else {
                 System.out.println("Unknown command: " + arrayOfStrings[0]);
             }
 

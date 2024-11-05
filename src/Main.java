@@ -4,11 +4,10 @@ import java.io.*;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-      //CLI.cd("testFolder");
+      CLI.cd("testFolder");
       System.out.println(CLI.pwd());
-      CLI.cd("..");
+      CLI.piping("cat pipingFile.txt | cd");
       System.out.println(CLI.pwd());
-      CLI.mkdir("a");
-      System.out.println(CLI.pwd());
+
     }
 }
