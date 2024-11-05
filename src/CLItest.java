@@ -190,7 +190,7 @@ public class CLItest {
         //CLI cmd = new CLI();
 
         // Get the current working directory using the pwd method
-        String currentDir = CLI.pwdTests();
+        String currentDir = CLI.pwd();
 
         // Get the expected current directory using the Java NIO Paths class
         String expectedDirectory = System.getProperty("user.dir");

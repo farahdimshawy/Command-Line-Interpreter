@@ -1,8 +1,5 @@
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -31,11 +28,9 @@ public class CLI {
         put("|", "Pipe - Passes the output of one command as input to another command.");
     }};
 
-    // print working directory
     static String pwdTests() {
         return System.getProperty("user.dir");
     }
-
     static String pwd() {
         return workingDirectory.getAbsolutePath();
     }
@@ -50,38 +45,27 @@ public class CLI {
         return file.getAbsoluteFile();
     }
 
-    // change directory
-    static String cd(String directoryPath) {
+    static public String cd(String path) {
 
-        if (directoryPath == null || directoryPath.trim().isEmpty()) {
-            directoryPath = workingDirectory.getParentFile().toString();
-        } else if (directoryPath.equals("~")) {
-            directoryPath = workingDirectory.getParentFile().toString();
+        Path newPath = workingDirectory.toPath().resolve(path).normalize();
+        File newDir = newPath.toFile();
+        if (path.equals("~")) {
+            return System.getProperty("user.home");
+       }
+        if(newDir.isDirectory()){
+            workingDirectory = newDir;
+            return workingDirectory.getAbsolutePath();
         }
-
-        File newDirectory;
-
-        if (directoryPath.equals("..")) {
-            newDirectory = workingDirectory.getParentFile();
-            if (newDirectory == null) {
-                return "Already at the root directory.";
-            }
-        } else {
-            newDirectory = makeAbsolute(directoryPath);
+        else{
+            String s = "This directory doesn't exist. Please try again.";
+            return s;
         }
-
-        if (!newDirectory.exists() || !newDirectory.isDirectory()) {
-            return "This directory doesn't exist. Please try again.";
-        }
-
-        workingDirectory = newDirectory;
-        return pwd(); // Return the new working directory path
     }
-
 
     // create directory
     static boolean mkdir(String d) {
-        File directory = new File(workingDirectory + File.separator + d);
+        Path path = workingDirectory.toPath().resolve(d).normalize();
+        File directory = path.toFile();
         return directory.exists() || directory.mkdirs();
     }
 
@@ -287,7 +271,6 @@ public class CLI {
     static Object piping(String command) throws IOException {
         // Split commands by pipe.txt character
         String[] commands = command.split("\\|");
-        CLI cli = new CLI();
         String output = null; // To hold the output of each command
 
         for (int i = 0; i < commands.length; i++) {
